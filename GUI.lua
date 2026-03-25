@@ -2,7 +2,6 @@
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
 local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 
@@ -186,7 +185,6 @@ local function UpdateESP()
             local humanoid = plr.Character:FindFirstChild("Humanoid")
 
             local screenPos, onScreen = Camera:WorldToViewportPoint(root.Position)
-            local headPos = head and Camera:WorldToViewportPoint(head.Position) or screenPos
 
             if ESPEnabled and onScreen then
                 local top = Camera:WorldToViewportPoint((head or root).Position + Vector3.new(0, 2.5, 0))
@@ -248,7 +246,7 @@ end
 RunService.RenderStepped:Connect(function()
     UpdateESP()
 
-    if AimbotEnabled and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+    if AimbotEnabled then
         local target = GetClosestPlayer()
         if target then
             local targetPos = Camera:WorldToViewportPoint(target.Position)
@@ -266,5 +264,3 @@ Players.PlayerRemoving:Connect(function(plr)
 end)
 
 MainFrame.Visible = true
-MainFrame.Visible = true
-print("AltAs GUI loaded")
