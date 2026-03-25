@@ -1,13 +1,8 @@
 Untested:
-loadstring(game:HttpGet("https://raw.githubusercontent.com/AltAchiever1/RobloxScripts/refs/heads/main/FPS-Spoof.lua"))() -- broken
+loadstring(game:HttpGet("https://raw.githubusercontent.com/AltAchiever1/RobloxScripts/refs/heads/main/GUI.lua"))()
 
-
-
-
-
-
-
-
+Broken:
+loadstring(game:HttpGet("https://raw.githubusercontent.com/AltAchiever1/RobloxScripts/refs/heads/main/FPS-Spoof.lua"))()
 
 
 Idk Why Im Making This I Never Even Play Roblox
