@@ -10,8 +10,9 @@ local AimbotEnabled = false
 local ESPEnabled = false
 local TracersEnabled = false
 local TeamCheck = true
-local AimPart = "Head"
-local AimSmoothness = 0.5
+local MaxDistance = 75 -- Distance in meters (studs/2.8 approx, but usually treated as 1:1 in scripts)
+local AimPart = "HumanoidRootPart" -- Centers the lock on the ESP box area
+local AimSmoothness = 0.5 
 
 local ESPBoxes = {}
 local ESPNames = {}
@@ -184,10 +185,14 @@ local function UpdateESP()
             local root = plr.Character.HumanoidRootPart
             local head = plr.Character:FindFirstChild("Head")
             local humanoid = plr.Character:FindFirstChild("Humanoid")
+            
+            -- Distance Check (Roblox uses studs, 75 meters is roughly 210 studs, but I will use your 75 value)
+            local distanceValue = (LocalPlayer.Character.HumanoidRootPart.Position - root.Position).Magnitude
+            local isWithinRange = distanceValue <= MaxDistance
 
             local screenPos, onScreen = Camera:WorldToViewportPoint(root.Position)
 
-            if ESPEnabled and onScreen then
+            if ESPEnabled and onScreen and isWithinRange then
                 local top = Camera:WorldToViewportPoint((head or root).Position + Vector3.new(0, 2.5, 0))
                 local bottom = Camera:WorldToViewportPoint(root.Position - Vector3.new(0, 3, 0))
                 local height = bottom.Y - top.Y
