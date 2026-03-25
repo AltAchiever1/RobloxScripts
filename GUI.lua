@@ -266,4 +266,5 @@ Players.PlayerRemoving:Connect(function(plr)
 end)
 
 MainFrame.Visible = true
+MainFrame.Visible = true
 print("AltAs GUI loaded")
