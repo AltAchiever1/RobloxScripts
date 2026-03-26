@@ -1,8 +1,7 @@
 Untested:
 
 Working:
-loadstring(game:HttpGet("https://raw.githubusercontent.com/AltAchiever1/RobloxScripts/refs/heads/main/Grok.lua"))() -- Issues
-loadstring(game:HttpGet("https://raw.githubusercontent.com/AltAchiever1/RobloxScripts/refs/heads/main/Gemini.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/AltAchiever1/RobloxScripts/refs/heads/main/GUI.lua"))()
 
 Broken:
 loadstring(game:HttpGet("https://raw.githubusercontent.com/AltAchiever1/RobloxScripts/refs/heads/main/FPS-Spoof.lua"))()
