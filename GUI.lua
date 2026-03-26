@@ -1,5 +1,3 @@
--- I Cant Code Lua For the Life Of Me So Im Gonna Test What AI's Do it Best This Is Grok
-
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
