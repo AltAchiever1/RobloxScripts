@@ -9,9 +9,9 @@ if oldGui then oldGui:Destroy() end
 
 local AimbotEnabled = false
 local ESPEnabled = false
+local NamesEnabled = false
 local TracersEnabled = false
 local FOVEnabled = false
-local TeamCheck = true
 local AimPart = "Head"
 local AimSmoothness = 0.15
 local FOVRadius = 120
@@ -35,8 +35,8 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 250, 0, 380)
-MainFrame.Position = UDim2.new(0.5, -125, 0.5, -190)
+MainFrame.Size = UDim2.new(0, 250, 0, 420)
+MainFrame.Position = UDim2.new(0.5, -125, 0.5, -210)
 MainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
@@ -140,13 +140,8 @@ CreateToggle("Aimbot", false, function(s) AimbotEnabled = s end)
 CreateToggle("Draw FOV", false, function(s) FOVEnabled = s end)
 CreateSlider("FOV Size", 30, 500, 120, function(v) FOVRadius = v end)
 CreateToggle("ESP Boxes", false, function(s) ESPEnabled = s end)
+CreateToggle("ESP Names", false, function(s) NamesEnabled = s end)
 CreateToggle("Tracers", false, function(s) TracersEnabled = s end)
-CreateToggle("Team Check", true, function(s) TeamCheck = s end)
-
-local function GetGrey(p)
-    if TeamCheck and p.Team == LocalPlayer.Team then return Color3.fromRGB(100, 100, 100) end
-    return Color3.fromRGB(180, 180, 180)
-end
 
 local function ClearESP(p)
     if ESPBoxes[p] then ESPBoxes[p]:Remove() ESPBoxes[p] = nil end
@@ -158,13 +153,10 @@ local function GetClosest()
     local target, dist = nil, FOVRadius
     local mouse = UserInputService:GetMouseLocation()
     for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild(AimPart) and p.Character:FindFirstChild("Humanoid") then
-            if TeamCheck and p.Team == LocalPlayer.Team then continue end
+        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild(AimPart) and p.Character:FindFirstChild("Humanoid") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
             if p.Character.Humanoid.Health <= 0 then continue end
-            
             local charDist = (LocalPlayer.Character.HumanoidRootPart.Position - p.Character.HumanoidRootPart.Position).Magnitude
             if charDist > MaxDistance then continue end
-
             local pos, vis = Camera:WorldToViewportPoint(p.Character[AimPart].Position)
             if vis then
                 local mag = (Vector2.new(pos.X, pos.Y) - mouse).Magnitude
@@ -181,12 +173,11 @@ RunService.RenderStepped:Connect(function()
     FOVCircle.Visible = FOVEnabled
     FOVCircle.Radius = FOVRadius
     for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character then
+        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
             local root, head, hum = p.Character.HumanoidRootPart, p.Character:FindFirstChild("Head"), p.Character:FindFirstChild("Humanoid")
             local charDist = (LocalPlayer.Character.HumanoidRootPart.Position - root.Position).Magnitude
             local pos, vis = Camera:WorldToViewportPoint(root.Position)
-            
-            if ESPEnabled and vis and hum.Health > 0 and charDist <= MaxDistance then
+            if (ESPEnabled or NamesEnabled or TracersEnabled) and vis and hum.Health > 0 and charDist <= MaxDistance then
                 if not ESPBoxes[p] then
                     ESPBoxes[p], ESPNames[p], TracerLines[p] = Drawing.new("Square"), Drawing.new("Text"), Drawing.new("Line")
                 end
@@ -194,9 +185,9 @@ RunService.RenderStepped:Connect(function()
                 local bot = Camera:WorldToViewportPoint(root.Position - Vector3.new(0, 3, 0))
                 local h, w = bot.Y - top.Y, (bot.Y - top.Y) * 0.6
                 local box, name, tr = ESPBoxes[p], ESPNames[p], TracerLines[p]
-                box.Visible, box.Size, box.Position, box.Color, box.Thickness = true, Vector2.new(w, h), Vector2.new(pos.X - w/2, pos.Y - h/2), GetGrey(p), 2
-                name.Visible, name.Text, name.Position, name.Center, name.Outline, name.Color, name.Size = true, p.Name .. " [" .. math.floor(hum.Health) .. "]", Vector2.new(pos.X, pos.Y - h/2 - 15), true, true, Color3.new(1, 1, 1), 16
-                tr.Visible, tr.From, tr.To, tr.Color, tr.Thickness = TracersEnabled, Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y), Vector2.new(pos.X, pos.Y), GetGrey(p), 2
+                box.Visible, box.Size, box.Position, box.Color, box.Thickness = ESPEnabled, Vector2.new(w, h), Vector2.new(pos.X - w/2, pos.Y - h/2), Color3.fromRGB(180, 180, 180), 2
+                name.Visible, name.Text, name.Position, name.Center, name.Outline, name.Color, name.Size = NamesEnabled, p.Name .. " [" .. math.floor(hum.Health) .. "]", Vector2.new(pos.X, pos.Y - h/2 - 15), true, true, Color3.new(1, 1, 1), 16
+                tr.Visible, tr.From, tr.To, tr.Color, tr.Thickness = TracersEnabled, Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y), Vector2.new(pos.X, pos.Y), Color3.fromRGB(180, 180, 180), 2
             else ClearESP(p) end
         else ClearESP(p) end
     end
