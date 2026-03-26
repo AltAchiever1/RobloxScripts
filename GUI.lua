@@ -10,11 +10,12 @@ if oldGui then oldGui:Destroy() end
 local AimbotEnabled = false
 local ESPEnabled = false
 local TracersEnabled = false
-local FOVEnabled = true
+local FOVEnabled = false
 local TeamCheck = true
 local AimPart = "Head"
 local AimSmoothness = 0.15
 local FOVRadius = 120
+local MaxDistance = 500
 
 local ESPBoxes = {}
 local ESPNames = {}
@@ -25,7 +26,7 @@ FOVCircle.Thickness = 1
 FOVCircle.NumSides = 100
 FOVCircle.Radius = FOVRadius
 FOVCircle.Filled = false
-FOVCircle.Visible = FOVEnabled
+FOVCircle.Visible = false
 FOVCircle.Color = Color3.fromRGB(200, 200, 200)
 
 local ScreenGui = Instance.new("ScreenGui")
@@ -136,7 +137,7 @@ local function CreateSlider(txt, min, max, def, cb)
 end
 
 CreateToggle("Aimbot", false, function(s) AimbotEnabled = s end)
-CreateToggle("Draw FOV", true, function(s) FOVEnabled = s end)
+CreateToggle("Draw FOV", false, function(s) FOVEnabled = s end)
 CreateSlider("FOV Size", 30, 500, 120, function(v) FOVRadius = v end)
 CreateToggle("ESP Boxes", false, function(s) ESPEnabled = s end)
 CreateToggle("Tracers", false, function(s) TracersEnabled = s end)
@@ -160,6 +161,10 @@ local function GetClosest()
         if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild(AimPart) and p.Character:FindFirstChild("Humanoid") then
             if TeamCheck and p.Team == LocalPlayer.Team then continue end
             if p.Character.Humanoid.Health <= 0 then continue end
+            
+            local charDist = (LocalPlayer.Character.HumanoidRootPart.Position - p.Character.HumanoidRootPart.Position).Magnitude
+            if charDist > MaxDistance then continue end
+
             local pos, vis = Camera:WorldToViewportPoint(p.Character[AimPart].Position)
             if vis then
                 local mag = (Vector2.new(pos.X, pos.Y) - mouse).Magnitude
@@ -176,10 +181,12 @@ RunService.RenderStepped:Connect(function()
     FOVCircle.Visible = FOVEnabled
     FOVCircle.Radius = FOVRadius
     for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character then
             local root, head, hum = p.Character.HumanoidRootPart, p.Character:FindFirstChild("Head"), p.Character:FindFirstChild("Humanoid")
+            local charDist = (LocalPlayer.Character.HumanoidRootPart.Position - root.Position).Magnitude
             local pos, vis = Camera:WorldToViewportPoint(root.Position)
-            if ESPEnabled and vis and hum.Health > 0 then
+            
+            if ESPEnabled and vis and hum.Health > 0 and charDist <= MaxDistance then
                 if not ESPBoxes[p] then
                     ESPBoxes[p], ESPNames[p], TracerLines[p] = Drawing.new("Square"), Drawing.new("Text"), Drawing.new("Line")
                 end
@@ -193,7 +200,7 @@ RunService.RenderStepped:Connect(function()
             else ClearESP(p) end
         else ClearESP(p) end
     end
-    if AimbotEnabled then
+    if AimbotEnabled and LocalPlayer.Character then
         local t = GetClosest()
         if t and mousemoverel then
             local tPos = Camera:WorldToViewportPoint(t.Position)
