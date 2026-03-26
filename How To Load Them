@@ -4,7 +4,7 @@ Working:
 loadstring(game:HttpGet("https://raw.githubusercontent.com/AltAchiever1/RobloxScripts/refs/heads/main/GUI.lua"))()
 
 Broken:
-loadstring(game:HttpGet("https://raw.githubusercontent.com/AltAchiever1/RobloxScripts/refs/heads/main/FPS-Spoof.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/AltAchiever1/RobloxScripts/refs/heads/main/FPS-Spoof.lua"))() -- just changes your FPS cap i gotta make it actually spoof
 
 
 Idk Why Im Making This I Never Even Play Roblox
