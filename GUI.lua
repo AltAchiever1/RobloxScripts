@@ -34,8 +34,8 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 250, 0, 350)
-MainFrame.Position = UDim2.new(0.5, -125, 0.5, -175)
+MainFrame.Size = UDim2.new(0, 250, 0, 380)
+MainFrame.Position = UDim2.new(0.5, -125, 0.5, -190)
 MainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
@@ -71,18 +71,16 @@ UIList.Parent = Content
 
 local function CreateToggle(txt, def, cb)
     local Tgl = Instance.new("TextButton")
-    Tgl.Size = UDim2.new(1, 0, 0, 40)
+    Tgl.Size = UDim2.new(1, 0, 0, 35)
     Tgl.BackgroundColor3 = def and Color3.fromRGB(80, 80, 80) or Color3.fromRGB(50, 50, 50)
     Tgl.Text = txt .. ": " .. (def and "ON" or "OFF")
     Tgl.TextColor3 = Color3.fromRGB(255, 255, 255)
     Tgl.Font = Enum.Font.GothamBold
     Tgl.TextSize = 14
     Tgl.Parent = Content
-    
     local Corner = Instance.new("UICorner")
     Corner.CornerRadius = UDim.new(0, 10)
     Corner.Parent = Tgl
-    
     local state = def
     Tgl.MouseButton1Click:Connect(function()
         state = not state
@@ -92,8 +90,54 @@ local function CreateToggle(txt, def, cb)
     end)
 end
 
+local function CreateSlider(txt, min, max, def, cb)
+    local SliderFrame = Instance.new("Frame")
+    SliderFrame.Size = UDim2.new(1, 0, 0, 45)
+    SliderFrame.BackgroundTransparency = 1
+    SliderFrame.Parent = Content
+    local Label = Instance.new("TextLabel")
+    Label.Size = UDim2.new(1, 0, 0, 20)
+    Label.Text = txt .. ": " .. def
+    Label.TextColor3 = Color3.new(1,1,1)
+    Label.BackgroundTransparency = 1
+    Label.Font = Enum.Font.Gotham
+    Label.TextSize = 12
+    Label.Parent = SliderFrame
+    local Bar = Instance.new("TextButton")
+    Bar.Size = UDim2.new(1, 0, 0, 10)
+    Bar.Position = UDim2.new(0, 0, 0, 25)
+    Bar.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    Bar.Text = ""
+    Bar.Parent = SliderFrame
+    local Fill = Instance.new("Frame")
+    Fill.Size = UDim2.new((def-min)/(max-min), 0, 1, 0)
+    Fill.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    Fill.BorderSizePixel = 0
+    Fill.Parent = Bar
+    local function Update()
+        local percent = math.clamp((UserInputService:GetMouseLocation().X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
+        local val = math.floor(min + (max - min) * percent)
+        Fill.Size = UDim2.new(percent, 0, 1, 0)
+        Label.Text = txt .. ": " .. val
+        cb(val)
+    end
+    Bar.MouseButton1Down:Connect(function()
+        local move; move = UserInputService.InputChanged:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseMovement then Update() end
+        end)
+        local release; release = UserInputService.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                move:Disconnect()
+                release:Disconnect()
+            end
+        end)
+        Update()
+    end)
+end
+
 CreateToggle("Aimbot", false, function(s) AimbotEnabled = s end)
 CreateToggle("Draw FOV", true, function(s) FOVEnabled = s end)
+CreateSlider("FOV Size", 30, 500, 120, function(v) FOVRadius = v end)
 CreateToggle("ESP Boxes", false, function(s) ESPEnabled = s end)
 CreateToggle("Tracers", false, function(s) TracersEnabled = s end)
 CreateToggle("Team Check", true, function(s) TeamCheck = s end)
@@ -110,22 +154,16 @@ local function ClearESP(p)
 end
 
 local function GetClosest()
-    local target = nil
-    local dist = FOVRadius
+    local target, dist = nil, FOVRadius
     local mouse = UserInputService:GetMouseLocation()
-
     for _, p in ipairs(Players:GetPlayers()) do
         if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild(AimPart) and p.Character:FindFirstChild("Humanoid") then
             if TeamCheck and p.Team == LocalPlayer.Team then continue end
             if p.Character.Humanoid.Health <= 0 then continue end
-
             local pos, vis = Camera:WorldToViewportPoint(p.Character[AimPart].Position)
             if vis then
                 local mag = (Vector2.new(pos.X, pos.Y) - mouse).Magnitude
-                if mag < dist then
-                    dist = mag
-                    target = p.Character[AimPart]
-                end
+                if mag < dist then dist = mag target = p.Character[AimPart] end
             end
         end
     end
@@ -137,71 +175,32 @@ RunService.RenderStepped:Connect(function()
     FOVCircle.Position = mLoc
     FOVCircle.Visible = FOVEnabled
     FOVCircle.Radius = FOVRadius
-
     for _, p in ipairs(Players:GetPlayers()) do
         if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-            local root = p.Character.HumanoidRootPart
-            local head = p.Character:FindFirstChild("Head")
-            local hum = p.Character:FindFirstChild("Humanoid")
+            local root, head, hum = p.Character.HumanoidRootPart, p.Character:FindFirstChild("Head"), p.Character:FindFirstChild("Humanoid")
             local pos, vis = Camera:WorldToViewportPoint(root.Position)
-
             if ESPEnabled and vis and hum.Health > 0 then
                 if not ESPBoxes[p] then
-                    ESPBoxes[p] = Drawing.new("Square")
-                    ESPNames[p] = Drawing.new("Text")
-                    TracerLines[p] = Drawing.new("Line")
+                    ESPBoxes[p], ESPNames[p], TracerLines[p] = Drawing.new("Square"), Drawing.new("Text"), Drawing.new("Line")
                 end
-
                 local top = Camera:WorldToViewportPoint(head.Position + Vector3.new(0, 2, 0))
                 local bot = Camera:WorldToViewportPoint(root.Position - Vector3.new(0, 3, 0))
-                local h = bot.Y - top.Y
-                local w = h * 0.6
-
-                local box = ESPBoxes[p]
-                box.Visible = true
-                box.Size = Vector2.new(w, h)
-                box.Position = Vector2.new(pos.X - w/2, pos.Y - h/2)
-                box.Color = GetGrey(p)
-                box.Thickness = 2
-
-                local name = ESPNames[p]
-                name.Visible = true
-                name.Text = p.Name .. " [" .. math.floor(hum.Health) .. "]"
-                name.Position = Vector2.new(pos.X, pos.Y - h/2 - 15)
-                name.Center = true
-                name.Outline = true
-                name.Color = Color3.new(1, 1, 1)
-                name.Size = 16
-
-                local tr = TracerLines[p]
-                tr.Visible = TracersEnabled
-                tr.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
-                tr.To = Vector2.new(pos.X, pos.Y)
-                tr.Color = GetGrey(p)
-                tr.Thickness = 2
-            else
-                ClearESP(p)
-            end
-        else
-            ClearESP(p)
-        end
+                local h, w = bot.Y - top.Y, (bot.Y - top.Y) * 0.6
+                local box, name, tr = ESPBoxes[p], ESPNames[p], TracerLines[p]
+                box.Visible, box.Size, box.Position, box.Color, box.Thickness = true, Vector2.new(w, h), Vector2.new(pos.X - w/2, pos.Y - h/2), GetGrey(p), 2
+                name.Visible, name.Text, name.Position, name.Center, name.Outline, name.Color, name.Size = true, p.Name .. " [" .. math.floor(hum.Health) .. "]", Vector2.new(pos.X, pos.Y - h/2 - 15), true, true, Color3.new(1, 1, 1), 16
+                tr.Visible, tr.From, tr.To, tr.Color, tr.Thickness = TracersEnabled, Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y), Vector2.new(pos.X, pos.Y), GetGrey(p), 2
+            else ClearESP(p) end
+        else ClearESP(p) end
     end
-
     if AimbotEnabled then
         local t = GetClosest()
-        if t then
+        if t and mousemoverel then
             local tPos = Camera:WorldToViewportPoint(t.Position)
-            if mousemoverel then
-                mousemoverel((tPos.X - mLoc.X) * AimSmoothness, (tPos.Y - mLoc.Y) * AimSmoothness)
-            end
+            mousemoverel((tPos.X - mLoc.X) * AimSmoothness, (tPos.Y - mLoc.Y) * AimSmoothness)
         end
     end
 end)
 
-UserInputService.InputBegan:Connect(function(input, processed)
-    if not processed and input.KeyCode == Enum.KeyCode.RightShift then
-        MainFrame.Visible = not MainFrame.Visible
-    end
-end)
-
+UserInputService.InputBegan:Connect(function(i, p) if not p and i.KeyCode == Enum.KeyCode.RightShift then MainFrame.Visible = not MainFrame.Visible end end)
 Players.PlayerRemoving:Connect(ClearESP)
